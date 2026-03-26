@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name="pysheds",
-    version="0.4",
+    version="0.5",
     description="🌎 Simple and fast watershed delineation in python.",
     long_description="🌎 Simple and fast watershed delineation in python.",
     long_description_content_type="text/x-rst",
@@ -44,7 +44,7 @@ setup(
         "scipy",
     ],
     extras_require=dict(
-        dev=["pytest", "pytest-cov"],
+        dev=["coverage>=7.10", "pytest>=9.0", "pytest-cov>=7.0"],
         recipes=["geopandas", "ipython", "matplotlib", "seaborn"]
     ),
 )
