@@ -422,28 +422,20 @@ class ViewFinder():
 
     @property
     def bbox(self):
-        has_rotation = self.affine.b == self.affine.d != 0
-        if has_rotation:
-            resolution_x = np.sqrt(self.affine.a**2 + self.affine.d**2)
-            resolution_y = np.sqrt(self.affine.b**2 + self.affine.e**2)
+        affine = self.affine
+        ncols = self.shape[-1]
+        nrows = self.shape[-2]
+        if affine.b == affine.d == 0:
+            xs = (affine.c, affine.c + affine.a * ncols)
+            ys = (affine.f, affine.f + affine.e * nrows)
         else:
-            resolution_x, resolution_y = self.affine.a, self.affine.e
-
-        left = self.affine.c
-        top = self.affine.f
-        right = left + resolution_x * self.shape[-1]
-        bottom = top + resolution_y * self.shape[-2]
-
-        if resolution_y < 0:
-            miny, maxy = bottom, top
-        else:
-            miny, maxy = top, bottom
-
-        if resolution_x < 0:
-            minx, maxx = right, left
-        else:
-            minx, maxx = left, right
-        return (minx, miny, maxx, maxy)
+            c0x, c0y = affine.c, affine.f
+            c1x, c1y = affine * (0, nrows)
+            c2x, c2y = affine * (ncols, nrows)
+            c3x, c3y = affine * (ncols, 0)
+            xs = (c0x, c1x, c2x, c3x)
+            ys = (c0y, c1y, c2y, c3y)
+        return (min(xs), min(ys), max(xs), max(ys))
 
     @property
     def extent(self):
