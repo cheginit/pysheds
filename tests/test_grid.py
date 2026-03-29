@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import pyproj
 import pytest
@@ -560,11 +562,44 @@ def test_misc(d, grid):
     grid._replace_rim(dem, l, r, t, b)
 
 
-def test_viewfinder_bbox():
+@pytest.mark.parametrize(
+    "affine_args, shape, expected",
+    [
+        pytest.param(
+            (1.0, 0.0, 0.0, 0.0, 1.0, 0.0),
+            (100, 200),
+            (0.0, 0.0, 200.0, 100.0),
+            id="positive_resolution",
+        ),
+        pytest.param(
+            (1.0, 0.0, 0.0, 0.0, -1.0, 100.0),
+            (100, 200),
+            (0.0, 0.0, 200.0, 100.0),
+            id="north_up",
+        ),
+        pytest.param(
+            (-1.0, 0.0, 200.0, 0.0, -1.0, 100.0),
+            (100, 200),
+            (0.0, 0.0, 200.0, 100.0),
+            id="negative_x_resolution",
+        ),
+        pytest.param(
+            (math.cos(math.pi / 2), -math.sin(math.pi / 2), 0.0,
+             math.sin(math.pi / 2), math.cos(math.pi / 2), 0.0),
+            (100, 200),
+            (-100.0, 0.0, 0.0, 200.0),
+            id="90_degree_rotation",
+        ),
+        pytest.param(
+            (1.0, 0.5, 0.0, -0.3, -1.0, 100.0),
+            (100, 200),
+            (0.0, -60.0, 250.0, 100.0),
+            id="shear_mixed_signs",
+        ),
+    ],
+)
+def test_viewfinder_bbox(affine_args, shape, expected):
     from affine import Affine
 
-    affine = Affine(0.9641494421429059, 0.0, 503066.3552400001, 0.0, 0.986615463859816, 170296.54693900005)
-    shape = (23229, 14821)
-    viewfinder = ViewFinder(affine, shape)
-    expected = (503066.3552400001, 170296.54693900005, 517356.01412200014, 193214.63754899972)
-    assert viewfinder.bbox == expected
+    viewfinder = ViewFinder(Affine(*affine_args), shape)
+    assert viewfinder.bbox == pytest.approx(expected, abs=1e-10)
